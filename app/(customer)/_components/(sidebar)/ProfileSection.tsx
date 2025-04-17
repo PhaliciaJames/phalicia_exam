@@ -1,108 +1,110 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
-import { User as UserIcon } from "lucide-react";
-import { ProfileSectionProps } from "./types";
-import ProfileEditModal from "./ProfileEditModal";
-import AvatarUploadForm from "./AvatarUploadForm";
+import Link from "next/link";
+import { User as UserIcon, Edit } from "lucide-react";
+import { SessionUser } from "@/app/SessionProvider";
 
-export default function ProfileSection({
-  user,
-  isCollapsed,
-}: ProfileSectionProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(
-    user.avatarUrl || null,
-  );
+interface ProfileSectionProps {
+  user: SessionUser;
+  isCollapsed: boolean;
+  onEditProfile?: () => void;
+}
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
-
-  const handleAvatarUpdateSuccess = (newAvatarUrl: string) => {
-    setCurrentAvatarUrl(newAvatarUrl);
-  };
-
+export default function ProfileSection({ user, isCollapsed, onEditProfile }: ProfileSectionProps) {
+  // Determine display name
+  const displayName = user.displayName || `${user.firstName} ${user.lastName}`.trim() || user.username;
+  
   return (
-    <div
-      className={`${isCollapsed ? "py-6 px-2" : "p-6"} border-b border-slate-600 flex flex-col items-center`}
-    >
-      <div className="relative">
-        {/* Avatar with white border */}
-        <div
-          className={`${isCollapsed ? "h-12 w-12" : "h-24 w-24"} rounded-full overflow-hidden bg-slate-600 mb-3 transition-all duration-300 border-2 border-white relative mt-5`}
-        >
-          {currentAvatarUrl ? (
-            <Image
-              src={currentAvatarUrl}
-              alt={user.displayName || "User"}
-              width={isCollapsed ? 48 : 96}
-              height={isCollapsed ? 48 : 96}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="h-full w-full flex items-center justify-center bg-slate-600">
-              <UserIcon
-                size={isCollapsed ? 24 : 48}
-                className="text-slate-300"
-              />
+    <div className="relative">
+      {/* Background Image - only show when sidebar is expanded */}
+      {!isCollapsed && user.backgroundUrl && (
+        <div className="w-full h-32 relative">
+          <Image 
+            src={user.backgroundUrl}
+            alt="Profile background"
+            width={256}
+            height={128}
+            className="w-full h-full object-cover"
+          />
+          {/* Gradient overlay for better text visibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-800 to-transparent opacity-60"></div>
+          
+          {/* Edit button for background - positioned in top right corner */}
+          {onEditProfile && (
+            <button 
+              onClick={onEditProfile}
+              className="absolute top-2 right-2 text-white bg-black bg-opacity-30 hover:bg-opacity-50 transition rounded-full p-1"
+              aria-label="Edit background image"
+            >
+              <Edit size={16} /> 
+            </button>
+          )}
+        </div>
+      )}
+      
+      <div className={`flex ${isCollapsed ? "justify-center" : "justify-between"} p-4 ${!isCollapsed && user.backgroundUrl ? "absolute bottom-0 left-0 right-0" : ""}`}>
+        <div className="flex items-center">
+          <div className="relative">
+            <Link href="/account/profile" className="block">
+              {user.avatarUrl ? (
+                <Image
+                  src={user.avatarUrl}
+                  alt={displayName}
+                  width={isCollapsed ? 32 : 48}
+                  height={isCollapsed ? 32 : 48}
+                  className="rounded-full border-2 border-white shadow-md"
+                />
+              ) : (
+                <div className={`${isCollapsed ? "w-8 h-8" : "w-12 h-12"} rounded-full bg-teal-500 flex items-center justify-center border-2 border-white shadow-md`}>
+                  <UserIcon size={isCollapsed ? 16 : 24} className="text-white" />
+                </div>
+              )}
+            </Link>
+            
+            {/* Avatar edit button - shown on hover */}
+            {!isCollapsed && onEditProfile && (
+              <button
+                onClick={onEditProfile}
+                className="absolute -bottom-1 -right-1 bg-teal-500 hover:bg-teal-600 text-white rounded-full p-1 shadow-md transition-all duration-200"
+                aria-label="Edit profile picture"
+              >
+                <Edit size={12} />
+              </button>
+            )}
+          </div>
+          
+          {!isCollapsed && (
+            <div className="ml-3">
+              <Link 
+                href="/account/profile"
+                className="font-medium text-white hover:text-teal-300 transition block"
+              >
+                {displayName}
+              </Link>
+              <p className="text-slate-300 text-sm truncate max-w-[140px]">
+                {user.username}
+              </p>
             </div>
           )}
         </div>
-        {/* Pencil icon positioned at the bottom-right of the avatar */}
-        <div
-          onClick={openModal}
-          className="absolute right-0 bottom-0 bg-teal-500 rounded-full w-8 h-8 flex items-center justify-center shadow-md border-2 border-white cursor-pointer hover:bg-teal-400 transition-colors"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width={isCollapsed ? 14 : 18}
-            height={isCollapsed ? 14 : 18}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        
+        {/* Profile settings button */}
+        {!isCollapsed && onEditProfile && (
+          <button 
+            onClick={onEditProfile}
+            className="text-slate-300 hover:text-white transition rounded-full p-1 hover:bg-slate-600 self-start"
+            aria-label="Edit profile"
           >
-            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-          </svg>
-        </div>
+            <Edit size={16} /> 
+          </button>
+        )}
       </div>
-
-      {!isCollapsed && (
-        <>
-          <h2 className="text-xl font-semibold mt-2">
-            {user.displayName || "Customer1"}
-          </h2>
-
-          <div className="flex gap-3 mt-4 w-full">
-            <button
-              onClick={openModal}
-              className="w-full py-3 px-3 bg-teal-500 rounded text-center font-medium hover:bg-teal-400 transition"
-            >
-              View
-            </button>
-
-            <button
-              onClick={openModal}
-              className="w-full py-3 px-3 bg-slate-600 rounded text-center font-medium hover:bg-slate-500 transition"
-            >
-              Edit
-            </button>
-          </div>
-        </>
+      
+      {/* Add a spacer when using background to ensure proper layout */}
+      {!isCollapsed && user.backgroundUrl && (
+        <div className="h-16"></div>
       )}
-
-      {/* Profile Edit Modal */}
-      <ProfileEditModal isOpen={isModalOpen} onClose={closeModal}>
-        <AvatarUploadForm
-          avatarUrl={currentAvatarUrl}
-          onSuccess={handleAvatarUpdateSuccess}
-          onClose={closeModal}
-        />
-      </ProfileEditModal>
     </div>
   );
 }

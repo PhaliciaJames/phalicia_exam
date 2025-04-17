@@ -12,10 +12,11 @@ export type UserRole =
   | "ADMIN"
   | "SUPERADMIN";
 
-// Define the SessionUser type with only the safe fields we want to expose
+// Updated SessionUser type with email and null support for avatarUrl
 export interface SessionUser {
   id: string;
   username: string;
+  email: string;
   firstName: string;
   lastName: string;
   displayName: string;
@@ -31,11 +32,12 @@ export interface SessionWithUser extends LuciaSession {
   user: SessionUser;
 }
 
-// Define the context interface with updateAvatar function
+// Updated SessionContext interface to handle null values
 interface SessionContext {
   user: SessionUser;
   session: SessionWithUser;
-  updateAvatar: (newAvatarUrl: string) => void;
+  updateAvatar: (newAvatarUrl: string | null) => void;
+  updateBackground: (newBackgroundUrl: string | null) => void;
 }
 
 const SessionContext = createContext<SessionContext | null>(null);
@@ -53,11 +55,19 @@ export default function SessionProvider({
   // Use state to store the user data so we can update it
   const [userData, setUserData] = useState<SessionUser>(value.user);
 
-  // Function to update avatar URL in the session context
-  const updateAvatar = (newAvatarUrl: string) => {
+  // Updated to handle null values
+  const updateAvatar = (newAvatarUrl: string | null) => {
     setUserData((prevUser) => ({
       ...prevUser,
       avatarUrl: newAvatarUrl,
+    }));
+  };
+  
+  // Updated to handle null values
+  const updateBackground = (newBackgroundUrl: string | null) => {
+    setUserData((prevUser) => ({
+      ...prevUser,
+      backgroundUrl: newBackgroundUrl,
     }));
   };
 
@@ -69,6 +79,7 @@ export default function SessionProvider({
       user: userData,
     },
     updateAvatar,
+    updateBackground,
   };
 
   return (

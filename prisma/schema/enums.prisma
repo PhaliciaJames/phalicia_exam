@@ -40,3 +40,9 @@ enum Tier {
     GOLD
     PLATINUM
 }
+
+enum MessageStatus {
+  READ
+  UNREAD
+  REPLIED
+}
